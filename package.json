@@ -1,0 +1,12 @@
+{
+  "name": "vercel-redirector",
+  "version": "1.0.0",
+  "description": "A simple redirector for a CTF challenge",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
