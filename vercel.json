@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "api/**": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/malicious-image.svg",
+      "dest": "/api/image.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/redirect.js"
+    }
+  ]
+}
