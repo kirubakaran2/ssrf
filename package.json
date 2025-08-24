@@ -1,12 +1,11 @@
 {
-  "name": "vercel-redirector",
+  "name": "ssrf-redirector",
   "version": "1.0.0",
-  "description": "A simple redirector for a CTF challenge",
-  "main": "api/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/index.js"
+    "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
