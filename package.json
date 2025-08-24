@@ -1,9 +1,14 @@
 {
-  "name": "ssrf-redirector",
+  "name": "ssrf-server",
   "version": "1.0.0",
+  "description": "SSRF testing server for CTF",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
   },
   "engines": {
     "node": ">=16.0.0"
